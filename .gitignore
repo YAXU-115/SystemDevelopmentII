@@ -22,3 +22,29 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# Environments
+.venv*
+venv*
+*/.venv*
+*/venv*
+*/*/.venv*
+*/*/venv*
+*/*/*/venv*
+*/*/*/.venv*
+
+# Python import
+__pycache__
+.pytest_cache
+*/__pycache__
+*/.pytest_cache
+*/*/__pycache__
+*/*/.pytest_cache
+*/*/*/__pycache__
+*/*/*/.pytest_cache
+
+# password etc
+.env
+*/.env
+*/*/.env
+*/*/*/.env
