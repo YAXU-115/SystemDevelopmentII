@@ -2,11 +2,11 @@
 # /usr/bin/env python
 # Example code to use Adafruit_CircuitPython_BME280
 # https://github.com/adafruit/Adafruit_CircuitPython_BME280
-#
 # 
 # MIT License
 # 
 # Copyright (c) 2021 Michiharu Takemoto <takemoto.development@gmail.com>
+# Modifications: Copyright (c) 2025 YAXU-115 <yamaguchi.sota.main@gmail.com>
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,14 +26,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import board
-import time
-from adafruit_bme280 import basic as adafruit_bme280
+try:
+    import board
+    from adafruit_bme280 import basic as adafruit_bme280
 
-i2c = board.I2C()
-instance_bme280 = adafruit_bme280.Adafruit_BME280_I2C(i2c, address=0x76)
+    i2c = board.I2C()
+    instance_bme280 = adafruit_bme280.Adafruit_BME280_I2C(i2c, address=0x76)
 
-instance_bme280.sea_level_pressure = 1013.30
+    instance_bme280.sea_level_pressure = 1013.30
+except Exception:
+    pass
+finally:
+    import time
+    import random
 
 def get_bme280_data():
     temperature = instance_bme280.temperature
@@ -42,37 +47,21 @@ def get_bme280_data():
     altitude = instance_bme280.altitude
     return temperature, humidity, pressure, altitude
 
-def get_bme280_data_as_dict():
-    temp, hum, pres, alt = get_bme280_data()
-    data = {
-        "temperature": temp,
-        "humidity": hum,
-        "pressure": pres,
-        "altitude": alt
-    }
-    return data
-
-def get_bme280_data_as_list():
-    temp, hum, pres, alt = get_bme280_data()
-    data = [temp, hum, pres, alt]
-    return data
-
-def get_bme280_data_as_iterator():
-    temp, hum, pres, alt = get_bme280_data()
-    yield temp
-    yield hum
-    yield pres
-    yield alt
+def get_bme280_data_test():
+    temp = 200.0
+    hum  = 100.0
+    pres = 1013.25
+    alt = 10000.0
+    return temp, hum, pres, alt
 
 if __name__ == "__main__":
-    # while True:
-    #     temp, hum, pres, alt = get_bme280_data()
-    #     print(f"\nTemperature: {temp:.1f} C")
-    #     print(f"Humidity: {hum:.1f} %")
-    #     print(f"Pressure: {pres:.1f} hPa")
-    #     print(f"Altitude = {alt:.2f} meters")
-    #     time.sleep(3)  # Adjust the sleep time as needed
     while True:
-        data = get_bme280_data_as_dict()
-        print(data)  # Print the data dictionary for testing
-        time.sleep(3)  # Adjust the sleep time as needed
+        try:
+            temp, hum, pres, alt = get_bme280_data()
+        except:
+            temp, hum, pres, alt = get_bme280_data_test()
+        print(f"Temperature: {temp:.2f} C")
+        print(f"Humidity: {hum:.2f} %")
+        print(f"Pressure: {pres:.2f} hPa")
+        print(f"Altitude: {alt:.2f} m")
+        time.sleep(1)
