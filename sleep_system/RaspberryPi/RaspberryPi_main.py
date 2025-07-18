@@ -1,10 +1,15 @@
 try:
     import RPi.GPIO as GPIO
     import get_to_bme280
+    import operation_csv
 except:
     import RaspberryPi.get_to_bme280 as get_to_bme280
+    import RaspberryPi.operation_csv as operation_csv
 finally:
     from time import sleep
+    from datetime import datetime
+    
+
 
 def dc_motor(temp, hum, pres, alt):
 
@@ -76,6 +81,8 @@ def change_dict(client_name, temperature, humidity, pressure, altitude, fan_duty
     return message
 
 def main():
+    filename = "sleep_system/RaspberryPi/data.csv"
+    operation = operation_csv.CsvClass(filename=filename)
 
     while True:
         try:
@@ -87,11 +94,14 @@ def main():
 
         print(f"Temperature: {temp}°C, Humidity: {hum}%, Pressure: {pres}hPa, Altitude: {alt}m, Fan Duty Cycle: {duty}%")
 
-        message1 = change_dict(client_name='RaspberryPi',temperature=temp,humidity=hum,pressure=pres,altitude=alt,fan_duty=duty)
+        message = operation.change_csv(client_name='RaspberryPi',temperature=temp,humidity=hum,pressure=pres,altitude=alt,fan_duty=duty,time=datetime.now())
 
-        message1 = [message1]
+        operation.append_csv(message=message)
+        read_file = operation.read_csv()
+
+        print(read_file)
         # Wait for a while before the next reading
-        sleep(10)
+        sleep(1)
 
 if __name__ == "__main__":
     main()
