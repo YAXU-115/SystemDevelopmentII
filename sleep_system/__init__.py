@@ -1,16 +1,12 @@
 def __init__():
-
     """
     A system that allows you to sleep comfortably even on summer nights
     """
-    pass
-
-def main():
-    """
-    Main function to run the sleep system
-    """
+    import RaspberryPi.RaspberryPi_main
+    
     print("Welcome to the Sleep System!")
-    # Here you can add more functionality or call other functions
+
+    RaspberryPi.RaspberryPi_main.main()
 
 if __name__ == "__main__":
-    main()
+    __init__()
