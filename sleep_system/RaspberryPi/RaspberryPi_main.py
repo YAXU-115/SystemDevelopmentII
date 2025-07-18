@@ -1,153 +1,99 @@
-# -*- coding: utf-8 -*-
-# /usr/bin/env python
-# Example code to use Adafruit_CircuitPython_BME280
+try:
+    import RPi.GPIO as GPIO
+    import get_to_bme280
+except:
+    import RaspberryPi.get_to_bme280 as get_to_bme280
+finally:
+    from time import sleep
 
-import socket
-import time
-import sys
-import re
-#change_json is imported to change the data format to JSON
-import change_json
-#get_to_bme280.py is imported to use the BME280 sensor
-import get_to_bme280
-
-SERVER = 'localhost'
-WAITING_PORT = 8765
-MESSAGE_FROM_CLIENT = "Hello, I am a client."
-
-WAIT_INTERVAL = 5  # seconds
-def client(hostname_v1 = SERVER, waiting_port_v1 = WAITING_PORT, message1 = MESSAGE_FROM_CLIENT):
-   
-    
-    node_s = hostname_v1
-    port_s = waiting_port_v1
-    client_name = socket.gethostname()
+def dc_motor(temp, hum, pres, alt):
 
     try:
-        count = 0
-        while True:
+        GPIO.setmode(GPIO.BCM)
 
-            # socoket for receiving and sending data
-            # AF_INET     : IPv4
-            # SOCK_STREAM : TCP
-            socket_r_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            socket_r_s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            print("node_s:", node_s,  " port_s:", str(port_s))
-            socket_r_s.connect((node_s, port_s))
-            print('Connecting to the server. '
-                + 'node: ' + node_s + '  '
-                + 'port: ' + str(port_s))
+        GPIO.setup(25, GPIO.OUT)
+        GPIO.setup(24, GPIO.OUT)
+        p0 = GPIO.PWM(25, 50)
+        p1 = GPIO.PWM(24, 50)
+        p0.start(0)
+        p1.start(0)
 
-            message1.append(get_to_bme280.get_bme280_data())
-            message1.append(client_name)
+        duty = get_duty(temp, hum, pres, alt)
 
-            data_s_str = change_json.change_json(message1, "client_name", client_name)
+        # 例：p0を正転、p1を停止（逆転したい場合はp0とp1を逆に）
+        p1.ChangeDutyCycle(0)
+        p0.ChangeDutyCycle(duty)
 
-            socket_r_s.send(data_s_str)
-
-            print('I (a client) have just sent data __' 
-                + str(data_s_str)
-                + '__ to the server ' + node_s + ' .')
-
-            socket_r_s.close()
-
-            time.sleep(WAIT_INTERVAL)
-
-            count = count + 1
-            if count > 100:
-                print("End of the client.")
-                # break
-                pass
+        p0.stop()
+        p1.stop()
+        GPIO.cleanup()
 
     except KeyboardInterrupt:
-        print("Ctrl-C is hit!")
-        print("End of this client.")
+        print("Enter Ctrl + C")
+        if duty == None or duty == "":
+            duty = 80 #強
 
-def hostname_check(hostname_v):
-    while True:
-            try:
-                yes_no = str(input(f"now hostname{hostname_v} . Are you OKey? y/n "))
-                if (yes_no == "n"):
-                    onetime_hostname_v = input("Please input the hostname: ")
-                    # ...existing code...
-                    check = re.match(
-                        r"^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\."
-                        r"(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\."
-                        r"(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\."
-                        r"(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$",
-                        onetime_hostname_v
-                    )
-                    # ...existing code...
-                    if not check:
-                        print("Please input the hostname again.")
-                        return False
-                    else:
-                        hostname_v = onetime_hostname_v
-                        print("hostname_v is set to:", hostname_v)
-                        return True
-                elif (yes_no == "y"):
-                    print("hostname_v is set to:", hostname_v)
-                    return True
-                else:
-                    pass
-            except ValueError:
-                print("Please input the hostname again.")
-                return False
-            except KeyboardInterrupt:
-                print("Ctrl-C is hit!")
-                print("End of this client.")
-                sys.exit(0)
-            except Exception as e:
-                print(f"An unexpected error occurred: {e}")
-                sys.exit(1)
+    except Exception as error:
+        print(f"Error: {error}")
+        if duty == None or duty == "":
+            duty = 80 #強
+
+    return duty
+
+def get_duty(temp, hum, pres, alt):
+    # 温度ごとの閾値と出力レベル
+    Weak = 20  # 弱
+    Moderately_Weak = 35 # 微弱
+    Moderate = 50 # 中
+    Moderately_strong = 65 # 微強
+    Strong = 80 # 強
+    # 温度と湿度に基づいてファンの出力レベルを決定
+    levels = [
+        (20.0, [(20.0, Weak), (35.0, Moderately_Weak), (50.0, Moderate), (65.0, Moderately_strong), (float('inf'), Strong)]),
+        (25.0, [(30.0, Moderately_Weak), (45.0, Moderate), (60.0, Moderately_strong), (float('inf'), Strong)]),
+        (30.0, [(40.0, Moderate), (55.0, Moderately_strong), (float('inf'), Strong)]),
+        (35.0, [(50.0, Strong), (float('inf'), Strong)]),
+        (float('inf'), [(float('inf'), Strong)])  # 35度以上は強
+    ]
+    # 湿度ごとの閾値と出力レベル
+    for temp_th, hum_levels in levels:
+        if temp < temp_th:
+            for hum_th, level in hum_levels:
+                if hum < hum_th:
+                    return level
+    # デフォルトは強
+    return Strong
+
+def change_dict(client_name, temperature, humidity, pressure, altitude, fan_duty):
+    message = {
+        "client_name": client_name,
+        "temperature": temperature,
+        "humidity": humidity,
+        "pressure": pressure,
+        "altitude": altitude,
+        "fan_duty": fan_duty
+    }
+    return message
 
 def main():
-    print("Start if __name__ == '__main__'")
-
-    sys_argc = len(sys.argv)
-    count = 1
-    hostname_v = "10.192.138.250"
-    waiting_port_v = 8765
-    message_v = "TEST"
-    hostname_v_boolean = False
 
     while True:
-        print(count, "/", sys_argc)
-        if(count >= sys_argc):
-            break
+        try:
+            temp, hum, pres, alt = get_to_bme280.get_bme280_data()
+            duty = dc_motor(temp, hum, pres, alt)
+        except:
+            temp, hum, pres, alt = get_to_bme280.get_bme280_data_test()
+            duty = 80
 
-        option_key = sys.argv[count]
-        #print(option_key)
-        if ("-h" == option_key):
-            count = count + 1
-            hostname_v = sys.argv[count]
-            hostname_v_boolean = True
-            #print(option_key, hostname_v)
-        if ("-p" == option_key):
-            count = count + 1
-            waiting_port_v = int(sys.argv[count])
-            #print(option_key, port_v)
-        if ("-m" == option_key):
-            count = count + 1
-            message_v = sys.argv[count]
-            #print(option_key, message_v)
+        print(f"Temperature: {temp}°C, Humidity: {hum}%, Pressure: {pres}hPa, Altitude: {alt}m, Fan Duty Cycle: {duty}%")
 
-        count = count + 1
+        message1 = change_dict(client_name='RaspberryPi',temperature=temp,humidity=hum,pressure=pres,altitude=alt,fan_duty=duty)
 
-    print("hostname_v_boolean:", hostname_v_boolean)
-    print("hostname_v:", hostname_v)
-    print("waiting_port_v:", waiting_port_v)
-    print("message_v:", message_v)
-
-    while not hostname_v_boolean:
-        print("hostname_v is not set. Please input the hostname.")
-        hostname_v_boolean = hostname_check(hostname_v)
-        
-
-    print("hostname_v:", hostname_v)
-
-    client(hostname_v, waiting_port_v, message_v)
+        message1 = [message1]
+        # Wait for a while before the next reading
+        sleep(10)
 
 if __name__ == "__main__":
     main()
+
 
