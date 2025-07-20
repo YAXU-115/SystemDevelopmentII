@@ -48,3 +48,15 @@ __pycache__
 */.env
 */*/.env
 */*/*/.env
+
+# test
+test
+*/test
+*/*/test
+*/*/*/test
+
+#sql
+test.sql
+*/test.sql
+*/*/test.sql
+*/*/*/test.sql
