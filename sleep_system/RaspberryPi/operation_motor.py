@@ -63,7 +63,7 @@ def dc_motor(duty, sleep_time=5):
 def get_duty(temperature, humidity, pressure, altitude):
     # 温度と湿度に基づいてファンの出力レベルを決定
     levels = [
-        (20.0, [(20.0, STOP), (30.0, WEAK), (40.0, MODERATELY_WEAK), (50.0, MODERATE), (60.0, MODERATELY_STRONG), (float('inf'), STRONG)])
+        (20.0, [(20.0, STOP), (30.0, WEAK), (40.0, MODERATELY_WEAK), (50.0, MODERATE), (60.0, MODERATELY_STRONG), (float('inf'), STRONG)]),
         (23.0, [(20.0, WEAK), (35.0, MODERATELY_WEAK), (50.0, MODERATE), (65.0, MODERATELY_STRONG), (float('inf'), STRONG)]),
         (25.0, [(30.0, MODERATELY_WEAK), (45.0, MODERATE), (60.0, MODERATELY_STRONG), (float('inf'), STRONG)]),
         (30.0, [(40.0, MODERATE), (55.0, MODERATELY_STRONG), (float('inf'), STRONG)]),
