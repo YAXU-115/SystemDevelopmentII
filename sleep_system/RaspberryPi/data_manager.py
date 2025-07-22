@@ -95,8 +95,8 @@ class CsvLogger:
         if not os.path.exists(filename):
             self.append_csv("client_name,temperature,humidity,pressure,altitude,fan_duty,timestamp\n")
 
-    def format_for_csv(self, client_name: str, temp: float, hum: float, pres: float, alt: float, duty: int, ts: datetime) -> str:
-        return f"{client_name},{temp},{hum},{pres},{alt},{duty},{ts}\n"
+    def format_for_csv(self, datatype: str, client_name: str, temp: float, hum: float, pres: float, alt: float, duty: int, ts: datetime) -> str:
+        return f"{datatype},{client_name},{temp},{hum},{pres},{alt},{duty},{ts}\n"
 
     def append_csv(self, message: str):
         try:

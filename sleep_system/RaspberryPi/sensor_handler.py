@@ -60,7 +60,7 @@ class SensorHandler:
             if config.DEVELOP:
                 print("RPi環境ではないため、センサーをモックモードで起動します。")
 
-    def read_data(self) -> tuple[float, float, float, float] | None:
+    def read_data(self) -> tuple[float, float, float, float, str] | None:
         """
         センサーから温度、湿度、気圧、高度を読み取る。
         センサーが利用できない場合は、テストデータを返す。
@@ -71,7 +71,8 @@ class SensorHandler:
                 humidity = self.sensor.relative_humidity
                 pressure = self.sensor.pressure
                 altitude = self.sensor.altitude
-                return temperature, humidity, pressure, altitude
+                datatype = "sensor"
+                return temperature, humidity, pressure, altitude, datatype
             except Exception as e:
                 if config.DEVELOP:
                     print(f"センサーデータの読み取り中にエラーが発生しました: {e}")
@@ -79,12 +80,13 @@ class SensorHandler:
         else:
             return self._read_mock_data()
 
-    def _read_mock_data(self) -> tuple[float, float, float, float]:
+    def _read_mock_data(self) -> tuple[float, float, float, float, str]:
         """テスト用の模擬センサーデータを生成する。"""
         temp = round(random.uniform(20.0, 30.0), 2)
         hum = round(random.uniform(40.0, 60.0), 2)
         pres = round(random.uniform(1000.0, 1020.0), 2)
         alt = round(random.uniform(50.0, 150.0), 2)
+        datatype = "test"
         if config.DEVELOP:
             print("モックデータを生成しました。")
-        return temp, hum, pres, alt
+        return temp, hum, pres, alt, datatype

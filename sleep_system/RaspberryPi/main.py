@@ -64,7 +64,7 @@ def main():
                 time.sleep(config.LOOP_INTERVAL_SECONDS)
                 continue
 
-            temp, hum, pres, alt = sensor_data
+            temp, hum, pres, alt, datatype = sensor_data
 
             # --- 2. Duty比の計算 ---
             # 十分なデータが溜まるまでは現在の値で、溜まったら平均値で判断
@@ -82,7 +82,7 @@ def main():
             db_manager.insert_record(temp, hum, pres, alt, duty, now)
 
             csv_message = csv_logger.format_for_csv(
-                config.CLIENT_NAME, temp, hum, pres, alt, duty, now
+                datatype, config.CLIENT_NAME, temp, hum, pres, alt, duty, now
             )
             csv_logger.append_csv(csv_message)
 
