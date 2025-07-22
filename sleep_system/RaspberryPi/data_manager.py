@@ -15,8 +15,8 @@ script_dir = Path(__file__).resolve().parent
 env_path = script_dir / '.env'
 load_dotenv(dotenv_path=env_path)
 
-class DatabaseManager:
-    """データベース操作を管理するクラス"""
+class LocalDatabaseManager:
+    """ローカルデータベース操作を管理するクラス"""
 
     def __init__(self):
         self.connection = self._get_db_connection()
@@ -45,7 +45,7 @@ class DatabaseManager:
             with self.connection.cursor() as cursor:
                 sql = "INSERT INTO sensor_readings (temperature, humidity, pressure, altitude, timestamp) VALUES (%s, %s, %s, %s, %s)"
                 cursor.execute(sql, (temp, hum, pres, alt, ts))
-                
+
                 sql = "INSERT INTO fan_control_logs (pwm_value, timestamp) VALUES (%s, %s)"
                 cursor.execute(sql, (duty, ts))
             self.connection.commit()
