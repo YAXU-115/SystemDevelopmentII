@@ -33,4 +33,5 @@ DB_TABLES = {
 # --- Main Application Settings ---
 LOOP_INTERVAL_SECONDS = 5  # Main loop delay
 NUM_READINGS_FOR_AVG = 5 # 平均計算に使用するデータ数
-CLIENT_NAME = "RaspberryPi"
+import socket
+CLIENT_NAME = socket.gethostname()
