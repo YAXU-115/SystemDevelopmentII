@@ -2,7 +2,7 @@
 # config.py
 
 # --- develop Settings ---
-DEVELOP = True
+DEVELOP = False
 
 # --- Sensor Settings ---
 I2C_ADDRESS = 0x76
