@@ -43,17 +43,30 @@ def calculate_average(readings: list[dict]) -> tuple[float, float, float, float]
 def main():
     """メイン処理"""
     # --- 初期化 ---
+    if config.DEVELOP:
+        print("システムを起動しました。センサーとファンの初期化を行います。")
+        print(f"センサーI2Cアドレス: {config.I2C_ADDRESS}, 海面気圧: {config.SEA_LEVEL_PRESSURE} hPa")
+        print(f"ファン制御ピン: 正転={config.PIN_FORWARD}, 逆転={config.PIN_REVERSE}")
+        print(f"CSVログファイル: {config.CSV_FILENAME}")
+    # センサー、ファン、データベースマネージャーの初期化
     sensor = sensor_handler.SensorHandler()
     fan = fan_controller.FanController(config.PIN_FORWARD, config.PIN_REVERSE)
-    db_manager = data_manager.LocalDatabaseManager()
+    locals_db_manager = data_manager.LocalDatabaseManager()
+    cloud_db_manager = data_manager.CloudDatabaseManager()
     csv_logger = data_manager.CsvLogger(config.CSV_FILENAME)
 
-    # 起動時にテーブルをクリア
-    db_manager.clear_tables(config.DB_TABLES["readings"], config.DB_TABLES["logs"])
+    # 起動時にローカルデータベースのテーブルをクリア
+    locals_db_manager.clear_tables(config.DB_TABLES["readings"], config.DB_TABLES["logs"])
 
     # 平均計算用のデータ保持（固定長キュー）
     recent_readings_for_avg = deque(maxlen=config.NUM_READINGS_FOR_AVG)
 
+    # クラウド送信カウンター
+    count = cloud_db_manager.cloud_count_init()
+
+    # --- メインループ ---
+    if config.DEVELOP:
+        print("メインループを開始します。Ctrl+Cで終了できます。")
     try:
         while True:
             # --- 1. センサーデータ取得 ---
@@ -79,7 +92,16 @@ def main():
 
             # --- 4. データ記録 ---
             now = datetime.datetime.now()
-            db_manager.insert_record(temp, hum, pres, alt, duty, now)
+            locals_db_manager.insert_record(temp, hum, pres, alt, duty, now)
+
+            if config.SENT_AZURE_COUNT > 0 and count % config.SENT_AZURE_COUNT == 0 and count > 0:
+                # 一時間に一回クラウドへ送信
+                # ローカルデータベースの直近一時間の値を取得
+                avg_temp, avg_hum, avg_pres, avg_alt = cloud_db_manager.one_hour_average()
+                if avg_temp is not None and avg_hum is not None and avg_pres is not None and avg_alt is not None:
+                    cloud_db_manager.one_hour_insert_record(avg_temp, avg_hum, avg_pres, avg_alt, duty, now)
+                    count = cloud_db_manager.cloud_count_init()
+
 
             csv_message = csv_logger.format_for_csv(
                 datatype, config.CLIENT_NAME, temp, hum, pres, alt, duty, now
@@ -87,7 +109,7 @@ def main():
             csv_logger.append_csv(csv_message)
 
             if config.DEVELOP:
-                for data in db_manager.get_recent_readings(config.NUM_READINGS_FOR_AVG):
+                for data in locals_db_manager.get_recent_readings(config.NUM_READINGS_FOR_AVG):
                     print(data)
 
 
@@ -98,6 +120,9 @@ def main():
             print(f"Time: {now.strftime('%H:%M:%S')} | Temp: {temp}°C | Hum: {hum}% | Duty: {duty}%")
 
             # --- 5. 待機 ---
+            count += 1
+            if config.DEVELOP:
+                print(f"クラウド送信カウンター: {count} (1時間に1回送信予定: {config.SENT_AZURE_COUNT})")
             time.sleep(config.LOOP_INTERVAL_SECONDS)
 
     except KeyboardInterrupt:
@@ -110,7 +135,7 @@ def main():
         # --- 終了処理 ---
         fan.stop()
         fan.cleanup()
-        db_manager.close()
+        locals_db_manager.close()
 
 if __name__ == "__main__":
     main()
