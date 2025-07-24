@@ -101,7 +101,7 @@ def main():
                 if avg_temp is not None and avg_hum is not None and avg_pres is not None and avg_alt is not None:
                     cloud_db_manager.one_hour_insert_record(avg_temp, avg_hum, avg_pres, avg_alt, duty, now)
                     count = cloud_db_manager.cloud_count_init()
-
+                    locals_db_manager.clear_tables(config.DB_TABLES["readings"], config.DB_TABLES["logs"])
 
             csv_message = csv_logger.format_for_csv(
                 datatype, config.CLIENT_NAME, temp, hum, pres, alt, duty, now
