@@ -37,3 +37,4 @@ NUM_READINGS_FOR_AVG = 5 # 平均計算に使用するデータ数
 SENT_AZURE_COUNT = (60*60)//LOOP_INTERVAL_SECONDS  # 1時間に1回クラウドへ送信
 import socket
 CLIENT_NAME = socket.gethostname()
+LOG_FILE = open("sleep_system/RaspberryPi/.log", "a", buffering=1, encoding="utf-8")  # 行バッファリング
