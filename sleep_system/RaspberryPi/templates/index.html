@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title> 
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1 class="text-center"><strong>夏夜でもぐっすりお休みシステム！</strong></h1>
+    <p class="text-center">このシステムは、快適な睡眠環境を提供するために設計されています。</p>
+    <p class="text-center">センサーからのデータを収集し、温度や湿度に基づいて最適な睡眠環境を維持します。</p>
+
+    <div class="text-center margin-top-20">
+        <form action="/" method="GET">
+            <label>
+                <input type="radio" name="status" id="status_high" value="start">スタート
+            </label>
+            <label class="margin-left-20">
+                <input type="radio" name="status" id="status_low" value="stop">ストップ
+            </label>
+            <br><input type="submit" value="送信" class="button margin-left-20 margin-top-20">
+        </form>
+        <p class="margin-top-20">現在の状態: {{ sleep_status }}</p>
+    </div>
+    
+</body>
+</html>
