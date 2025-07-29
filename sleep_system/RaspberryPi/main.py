@@ -12,6 +12,9 @@ import sensor_handler
 import fan_controller
 import data_manager
 
+fan = None
+stop_flag = False
+
 def calculate_average(readings: list[dict]) -> tuple[float, float, float, float]:
     """
     直近のデータ群から各項目の平均値を計算する。
@@ -49,6 +52,9 @@ def main():
         print(f"ファン制御ピン: 正転={config.PIN_FORWARD}, 逆転={config.PIN_REVERSE}")
         print(f"CSVログファイル: {config.CSV_FILENAME}")
     # センサー、ファン、データベースマネージャーの初期化
+    global fan
+    global stop_flag
+    stop_flag = False
     sensor = sensor_handler.SensorHandler()
     fan = fan_controller.FanController(config.PIN_FORWARD, config.PIN_REVERSE)
     locals_db_manager = data_manager.LocalDatabaseManager()
@@ -68,7 +74,7 @@ def main():
     if config.DEVELOP:
         print("メインループを開始します。Ctrl+Cで終了できます。")
     try:
-        while True:
+        while not stop_flag:
             # --- 1. センサーデータ取得 ---
             sensor_data = sensor.read_data()
             if sensor_data is None:
@@ -136,6 +142,25 @@ def main():
         fan.stop()
         fan.cleanup()
         locals_db_manager.close()
+        if config.DEVELOP:
+            print("すべてのリソースを解放しました。プログラムを終了します。")
+
+def stop():
+    """プログラムを終了するための関数"""
+    # ファンとセンサーのクリーンアップ
+    global fan
+    global stop_flag
+    stop_flag = True
+    if fan is None:
+        return
+    locals_db_manager = data_manager.LocalDatabaseManager()
+
+    fan.stop()
+    fan.cleanup()
+    locals_db_manager.close()
+    if config.DEVELOP:
+        print("すべてのリソースを解放しました。プログラムを終了します。")
+
 
 if __name__ == "__main__":
     main()
