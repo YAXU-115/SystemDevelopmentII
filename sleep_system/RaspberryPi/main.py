@@ -139,9 +139,11 @@ def main():
             print(f"予期せぬエラーが発生しました: {e}")
     finally:
         # --- 終了処理 ---
-        fan.stop()
-        fan.cleanup()
+        if fan is not None:
+            fan.stop()
+            fan.cleanup()
         locals_db_manager.close()
+        fan = None
         if config.DEVELOP:
             print("すべてのリソースを解放しました。プログラムを終了します。")
 
@@ -158,6 +160,7 @@ def stop():
     fan.stop()
     fan.cleanup()
     locals_db_manager.close()
+    fan = None
     if config.DEVELOP:
         print("すべてのリソースを解放しました。プログラムを終了します。")
 
