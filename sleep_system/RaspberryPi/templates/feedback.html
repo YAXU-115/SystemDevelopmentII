@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+        <style>
+        .text-center {
+  text-align: center;
+}
+.margin-left-20 {
+    margin-left: 20px;
+}
+.margin-top-20 {
+    margin-top: 20px;
+}
+.margin-top-50 {
+    margin-top: 50px;
+}
+    .button {
+    padding: 10px 20px;
+    background-color: #9b9b9b;
+    color: rgb(0, 0, 0);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+    </style>
+</head>
+<body>
+    <h1 class="text-center margin-top-50"><strong>フィードバック</strong></h1>
+
+    <h3 class="text-center margin-top-20">ご意見・ご感想をお聞かせください。</h3>
+    <h3 class="text-center margin-top-20">昨夜の快適度は？？</h3>
+    <div class="text-center">
+        <form action="/feedback" method="POST" class="margin-top-20">
+            <label>
+                <input type="radio" name="comfort_level" value="hot">暑い
+            </label>
+            <label class="margin-left-20">
+                <input type="radio" name="comfort_level" value="cold">寒い
+            </label>
+            <label class="margin-left-20">
+                <input type="radio" name="comfort_level" value="normal">快適
+            </label>
+            <a href="{{ url_for('index', sleep_status=request.args.get('sleep_status', '') ) }}">
+                <br><input type="submit" value="送信" class="button margin-left-20 margin-top-20">
+            </a>
+        </form>
+        <div class="margin-top-50">
+            <a href="{{ url_for('index', sleep_status=request.args.get('sleep_status', '') ) }}" class="margin-top-50"><input type="submit" value="戻る" class="button"></a>
+        </div>
+    </div>
+</body>
+</html>
