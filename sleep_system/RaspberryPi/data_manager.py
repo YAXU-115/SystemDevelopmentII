@@ -8,6 +8,7 @@ from pathlib import Path
 from datetime import datetime
 import config
 import pyodbc
+import bcrypt
 
 
 # ディレクトリのパスを取得
@@ -130,13 +131,72 @@ class CloudDatabaseManager:
         if not self.connection: return []
         try:
             with self.connection.cursor() as cursor:
-                sql = f"SELECT TOP {num_readings} * FROM sensor_readings ORDER BY timestamp DESC"
+                sql = f"SELECT TOP {num_readings} * FROM sensor_readings ORDER BY recorded_time DESC"
                 cursor.execute(sql)
                 return cursor.fetchall()
         except pyodbc.Error as e:
             if config.DEVELOP:
                 print(f"クラウドデータベースからの読み取りエラー: {e}")
             return []
+    
+    # def get_recent_feedback(self, user_id: str, num_feedback: int) -> list:
+    #     # クラウドデータベースからの最近のフィードバック取得処理を実装
+    #     if not self.connection: return []
+    #     try:
+    #         with self.connection.cursor() as cursor:
+    #             sql = f"SELECT TOP {num_feedback} * FROM feedback_log WHERE user_id = {user_id} ORDER BY recorded_time DESC"
+    #             cursor.execute(sql)
+    #             return cursor.fetchall()
+    #     except pyodbc.Error as e:
+    #         if config.DEVELOP:
+    #             print(f"クラウドデータベースからのフィードバック読み取りエラー: {e}")
+    #         return []
+    def user_insert_settings(self, user_id: str, user_pw: str):
+        # クラウドデータベースへのユーザー設定挿入処理を実装
+        if not self.connection: return
+        try:
+            password_bytes = user_pw.encode('utf-8')
+            hashed_password = bcrypt.hashpw(password_bytes, bcrypt.gensalt())
+            print(f"ユーザーID: {user_id}, ハッシュ化されたパスワード: {hashed_password}")
+            with self.connection.cursor() as cursor:
+                sql = "INSERT INTO user_setting (username, password_hash) VALUES (?, ?)"
+                cursor.execute(sql, (user_id, hashed_password))
+
+            self.connection.commit()
+            if config.DEVELOP:
+                print("Azure SQL にユーザー設定を送信しました。")
+        except pyodbc.Error as e:
+            if config.DEVELOP:
+                print(f"クラウドデータベースへのユーザー設定書き込みエラー: {e}")
+    
+    def get_user_settings(self, user_id: str):
+        # クラウドデータベースからのユーザー設定取得処理を実装
+        if not self.connection: return None
+        try:
+            with self.connection.cursor() as cursor:
+                sql = "SELECT * FROM user_setting WHERE username = ?"
+                cursor.execute(sql, (user_id,))
+                return cursor.fetchone()
+        except pyodbc.Error as e:
+            if config.DEVELOP:
+                print(f"クラウドデータベースからのユーザー設定読み取りエラー: {e}")
+            return None
+    
+    def feedback_insert_record(self, user_id: str, feedback: str, ts: datetime):
+        # クラウドデータベースへのフィードバック挿入処理を実装
+        if not self.connection: return
+        try:
+            with self.connection.cursor() as cursor:
+                sql = "INSERT INTO feedback_log (date, user_id, rating, notes) VALUES (?, ?, ?, ?)"
+                cursor.execute(sql, (ts, user_id, feedback, ''))
+
+            self.connection.commit()
+            if config.DEVELOP:
+                print("Azure SQL にフィードバックを送信しました。")
+        except pyodbc.Error as e:
+            if config.DEVELOP:
+                print(f"クラウドデータベースへのフィードバック書き込みエラー: {e}")
+    
     
     def cloud_count_init(self):
         """クラウド送信カウンターの初期化"""
@@ -219,3 +279,10 @@ class CsvLogger:
         except IOError as e:
             if config.DEVELOP:
                 print(f"CSVファイルへの書き込みエラー: {e}")
+
+if __name__ == "__main__":
+    cloud_db_manager = CloudDatabaseManager()
+    cloud_db_manager.user_insert_settings(
+        "aaa",
+        "bbb"
+    )

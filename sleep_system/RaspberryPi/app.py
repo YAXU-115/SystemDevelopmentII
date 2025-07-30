@@ -5,6 +5,8 @@ import threading
 import main, config
 from dotenv import load_dotenv
 from pathlib import Path
+import data_manager
+import bcrypt
 
 
 script_dir = Path(__file__).resolve().parent
@@ -17,11 +19,14 @@ main_thread = None
 feedback_status = None
 signin_flag = False
 sleep_status = "stop"
+time_now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+user_id_db = None
 
 def log_access(method):
     """アクセスログ用デコレーター"""
     @wraps(method)
     def wrapper(*args, **kwargs):
+        global time_now
         visitor_ip = request.remote_addr
         time_now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         print(f"{request.method}_access {time_now} {visitor_ip}")
@@ -61,12 +66,23 @@ def get_index():
 @log_access
 def post_feedback():
     global sleep_status
+    global time_now
+    global user_id_db
+    time_now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    cloud_db_manager = data_manager.CloudDatabaseManager()
     print("POSTリクエストを受け付けました。")
     feedback_status = request.form.get('comfort_level', '')
     if not feedback_status:
         print("フィードバックステータスが提供されていません。")
     if feedback_status:
         feedback_data = feedback_status.lower()
+        cloud_db_manager.feedback_insert_record(
+            user_id=user_id_db,
+            feedback=feedback_data,
+            ts=time_now
+    )
+
+
 
         print(f"フィードバックステータス: {feedback_data}")
 
@@ -90,18 +106,32 @@ def post_signin():
         return render_template("signin.html")
 
 def __get_user(user_id,user_pw):
+    global user_id_db
+
     if user_id == None or user_pw == None:
         return False
-    else:
-        try:
-            user_id_env=os.getenv('APP_USRE_ID')
-            user_pw_env=os.getenv('APP_USRE_PW')
-            if user_id == user_id_env and user_pw == user_pw_env:
-                return True
-            else:
-                return False
-        except:
+    
+    try:
+        cloud_db_manager = data_manager.CloudDatabaseManager()
+        user_data = cloud_db_manager.get_user_settings(user_id=user_id)
+
+        if not user_data:
+            print(f"認証エラー: ユーザー '{user_id}' が見つかりません。")
             return False
+
+        stored_hash_str = user_data[2]
+
+        password_bytes = user_pw.encode('utf-8')
+        stored_hash_bytes = stored_hash_str.encode('utf-8')
+
+        user_id_db = user_data[0]  # ユーザーID
+
+        if bcrypt.checkpw(password_bytes, stored_hash_bytes):
+            return True
+        else:
+            return False
+    except:
+        return False
 
 @app.route("/feedback" , methods=["GET"])
 def feedback():
