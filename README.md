@@ -36,3 +36,49 @@
 ---
 
 ## ディレクトリ構成
+
+```
+sleep_system/
+└─ RaspberryPi/
+   ├─ app.py
+   ├─ config.py
+   ├─ data_manager.py
+   ├─ fan_controller.py
+   ├─ main.py
+   ├─ sensor_handler.py
+   ├─ .env
+   ├─ .log
+   ├─ data/
+   ├─ static/
+   ├─ templates/
+   └─ ...
+```
+
+---
+
+## 使い方
+
+1. `.env` ファイルにデータベースやクラウドの接続情報を記入してください。
+2. 必要なPythonパッケージをインストールしてください（`requirements.txt` 参照）。
+3. Raspberry Pi上で `python app.py` を実行してください。
+4. Webブラウザで `http://<RaspberryPiのIP>:5002/` にアクセスし、システムを操作できます。
+
+---
+
+## ライセンス
+
+MIT License  
+Copyright (c) 2025 YAXU-115
+
+---
+
+## 作者
+
+YAXU-115（yamaguchi.sota.main@gmail.com）
+
+---
+
+## 補足
+
+- 本リポジトリは三年前期「システム開発Ⅱ」個人開発課題用です。
+- 今後、エアコン制御やより高度な分析機能の追加も検討しています。
